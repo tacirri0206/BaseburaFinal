@@ -6,12 +6,11 @@ import os
 import re
 
 class BaseburaApp:
-    def __init__(self, root): 
+    def __init__(self, root):
         self.root = root
         self.root.title("Basebura - Sistema de Recolección")
         self.root.geometry("600x400")
         
-
         # Conexión a base de datos
         self.conn = sqlite3.connect('basebura.db')
         self.crear_tablas()
@@ -19,30 +18,36 @@ class BaseburaApp:
         # Variable para almacenar el correo del usuario que inició sesión
         self.usuario_correo = None
 
-        # Frame principal
-        self.frame_principal = tk.Frame(root)
+        # Frame principal con color de fondo
+        self.frame_principal = tk.Frame(root, bg="#497D83")
         self.frame_principal.pack(expand=True, fill='both')
 
-        # Título de la aplicación
-        self.titulo = tk.Label(self.frame_principal, text="Basebura", font=("Arial", 24))
+        # Título de la aplicación con color de texto blanco
+        self.titulo = tk.Label(self.frame_principal, text="Basebura", font=("Arial", 24), bg="#497D83", fg="white")
         self.titulo.pack(pady=20)
 
-        # Descripción
+        # Descripción con color de texto blanco
         self.descripcion = tk.Label(
             self.frame_principal, 
             text="Recolección de basura en tianguis de manera eficiente y práctica", 
             font=("Arial", 12), 
-            wraplength=500
+            wraplength=500, 
+            bg="#497D83", 
+            fg="white"
         )
         self.descripcion.pack(pady=10)
 
-        # Botón para comenzar
+        # Botón para comenzar con el fondo #7DA181 y texto negro
         self.btn_comenzar = tk.Button(
             self.frame_principal, 
             text="Comenzar", 
-            command=self.abrir_login
+            command=self.abrir_login, 
+            bg="#7DA181", 
+            fg="black", 
+            font=("Arial", 12)
         )
         self.btn_comenzar.pack(pady=20)
+
 
     def crear_tablas(self):
         cursor = self.conn.cursor()
@@ -82,43 +87,49 @@ class BaseburaApp:
         self.frame_principal.pack_forget()
 
         # Crear frame de login
-        self.frame_login = tk.Frame(self.root)
+        self.frame_login = tk.Frame(self.root, bg="#497D83")
         self.frame_login.pack(expand=True, fill='both')
 
         # Título de login
-        tk.Label(self.frame_login, text="Iniciar Sesión", font=("Arial", 18)).pack(pady=20)
+        tk.Label(self.frame_login, text="Iniciar Sesión", font=("Arial", 18), bg="#497D83", fg="white").pack(pady=20)
 
         # Email
-        tk.Label(self.frame_login, text="Correo electrónico:").pack()
-        self.email_entry = tk.Entry(self.frame_login, width=30)
+        tk.Label(self.frame_login, text="Correo electrónico:", bg="#497D83", fg="white").pack()
+        self.email_entry = tk.Entry(self.frame_login, width=30, bg="#527A65", fg="white")
         self.email_entry.pack(pady=5)
 
         # Contraseña
-        tk.Label(self.frame_login, text="Contraseña:").pack()
-        self.pass_entry = tk.Entry(self.frame_login, show="*", width=30)
+        tk.Label(self.frame_login, text="Contraseña:", bg="#497D83", fg="white").pack()
+        self.pass_entry = tk.Entry(self.frame_login, show="*", width=30, bg="#527A65", fg="white")
         self.pass_entry.pack(pady=5)
 
         # Botones de login
-        frame_botones = tk.Frame(self.frame_login)
+        frame_botones = tk.Frame(self.frame_login, bg="#497D83")
         frame_botones.pack(pady=10)
 
-        btn_admin = tk.Button(frame_botones, text="Administrador", command=lambda: self.iniciar_sesion('admin'))
+        btn_admin = tk.Button(frame_botones, text="Administrador", command=lambda: self.iniciar_sesion('admin'), 
+                            bg="#7DA181", fg="black", font=("Helvetica", 12))
         btn_admin.pack(side=tk.LEFT, padx=5)
 
-        btn_representante = tk.Button(frame_botones, text="Representante", command=lambda: self.iniciar_sesion('representante'))
+        btn_representante = tk.Button(frame_botones, text="Representante", command=lambda: self.iniciar_sesion('representante'), 
+                                    bg="#7DA181", fg="black", font=("Helvetica", 12))
         btn_representante.pack(side=tk.LEFT, padx=5)
 
-        btn_trabajador = tk.Button(frame_botones, text="Trabajador", command=lambda: self.iniciar_sesion('trabajador'))
+        btn_trabajador = tk.Button(frame_botones, text="Trabajador", command=lambda: self.iniciar_sesion('trabajador'), 
+                                bg="#7DA181", fg="black", font=("Helvetica", 12))
         btn_trabajador.pack(side=tk.LEFT, padx=5)
 
         # Botón de cancelar
-        btn_cancelar = tk.Button(self.frame_login, text="Cancelar", command=self.volver_inicio)
+        btn_cancelar = tk.Button(self.frame_login, text="Cancelar", command=self.volver_inicio, 
+                                bg="#497D83", fg="black", font=("Helvetica", 12))
         btn_cancelar.pack(pady=10)
 
     def iniciar_sesion(self, tipo_cuenta):
+        # Obtener correo y contraseña del formulario
         correo = self.email_entry.get()
         contrasena = self.pass_entry.get()
 
+        # Verificar si el usuario existe con las credenciales dadas
         cursor = self.conn.cursor()
         cursor.execute(
             "SELECT * FROM usuarios WHERE correo=? AND contrasena=? AND tipo_cuenta=?", 
@@ -127,37 +138,46 @@ class BaseburaApp:
         usuario = cursor.fetchone()
 
         if usuario:
-            # Guardar el correo del usuario que inició sesión
+            # Si el usuario es encontrado, guardar su correo
             self.usuario_correo = correo
 
-            # Limpiar frames anteriores
-            for widget in self.root.winfo_children():
-                widget.destroy()
+            # Limpiar todos los widgets en la ventana actual
+            self.limpiar_frame()
 
-            # Abrir menú según tipo de cuenta
-            if tipo_cuenta == 'admin':
-                self.menu_admin()
-            elif tipo_cuenta == 'representante':
-                self.menu_representante()
-            elif tipo_cuenta == 'trabajador':
-                self.menu_trabajador()
+            # Abrir el menú correspondiente según el tipo de cuenta
+            self.abrir_menu(tipo_cuenta)
         else:
+            # Si las credenciales no coinciden, mostrar un error
             messagebox.showerror("Error", "Credenciales incorrectas")
 
-    def volver_inicio(self):
-        # Limpiar frames anteriores
+    def limpiar_frame(self):
+        """Método para limpiar todos los widgets del frame actual"""
         for widget in self.root.winfo_children():
             widget.destroy()
-        
-        # Recrear frame principal
+
+    def abrir_menu(self, tipo_cuenta):
+        """Método para abrir el menú correspondiente según el tipo de cuenta"""
+        if tipo_cuenta == 'admin':
+            self.menu_admin()
+        elif tipo_cuenta == 'representante':
+            self.menu_representante()
+        elif tipo_cuenta == 'trabajador':
+            self.menu_trabajador()
+
+    def volver_inicio(self):
+        """Método para volver al inicio y limpiar la interfaz"""
+        self.limpiar_frame()
+
+        # Volver a crear la interfaz inicial
         self.__init__(self.root)
 
     def menu_admin(self):
-        # Menú de administrador
-        frame_admin = tk.Frame(self.root)
+        # Menú de administrador con estilo
+        frame_admin = tk.Frame(self.root, bg="#497D83")
         frame_admin.pack(expand=True, fill='both')
 
-        tk.Label(frame_admin, text="Menú de Administrador", font=("Arial", 18)).pack(pady=20)
+        # Encabezado
+        tk.Label(frame_admin, text="Menú de Administrador", font=("Arial", 18), bg="#497D83", fg="white").pack(pady=20)
 
         opciones = [
             ("Crear Cuentas", self.crear_cuentas),
@@ -169,15 +189,20 @@ class BaseburaApp:
         ]
 
         for texto, comando in opciones:
-            btn = tk.Button(frame_admin, text=texto, command=comando, width=30)
+            btn = tk.Button(frame_admin, text=texto, command=comando, width=30, bg="#7DA181", fg="black", font=("Arial", 12))
             btn.pack(pady=5)
 
     def crear_cuentas(self):
-        # Crear cuentas de administrador
+        # Crear cuentas de administrador con diseño
         def guardar_usuario():
             correo = correo_entry.get()
             contrasena = contrasena_entry.get()
             tipo_cuenta = tipo_cuenta_var.get()
+
+            # Validar que todos los campos estén llenos
+            if not correo or not contrasena or not tipo_cuenta:
+                messagebox.showerror("Error", "Todos los campos deben ser llenados.")
+                return
 
             # Verificar si el correo ya existe en la base de datos
             cursor = self.conn.cursor()
@@ -189,36 +214,37 @@ class BaseburaApp:
             else:
                 try:
                     cursor.execute("INSERT INTO usuarios (correo, contrasena, tipo_cuenta) VALUES (?, ?, ?)",
-                                   (correo, contrasena, tipo_cuenta))
+                                (correo, contrasena, tipo_cuenta))
                     self.conn.commit()
                     messagebox.showinfo("Éxito", "Cuenta creada correctamente")
                     ventana_crear.destroy()
                 except sqlite3.IntegrityError:
                     messagebox.showerror("Error", "Error al crear la cuenta.")
 
-        # Ventana para crear cuenta
+        # Ventana para crear cuenta con diseño
         ventana_crear = tk.Toplevel(self.root)
         ventana_crear.title("Crear Cuenta")
         ventana_crear.geometry("400x300")
+        ventana_crear.config(bg="#497D83")
 
-        tk.Label(ventana_crear, text="Correo electrónico:").pack(pady=5)
+        tk.Label(ventana_crear, text="Correo electrónico:", bg="#497D83", font=("Arial", 12)).pack(pady=5)
         correo_entry = tk.Entry(ventana_crear, width=30)
         correo_entry.pack(pady=5)
 
-        tk.Label(ventana_crear, text="Contraseña:").pack(pady=5)
+        tk.Label(ventana_crear, text="Contraseña:", bg="#497D83", font=("Arial", 12)).pack(pady=5)
         contrasena_entry = tk.Entry(ventana_crear, show="*", width=30)
         contrasena_entry.pack(pady=5)
 
-        tk.Label(ventana_crear, text="Tipo de cuenta:").pack(pady=5)
+        tk.Label(ventana_crear, text="Tipo de cuenta:", bg="#497D83", font=("Arial", 12)).pack(pady=5)
         tipo_cuenta_var = tk.StringVar(value="admin")
         tipo_cuenta_menu = tk.OptionMenu(ventana_crear, tipo_cuenta_var, "admin", "representante", "trabajador")
         tipo_cuenta_menu.pack(pady=5)
 
-        btn_guardar = tk.Button(ventana_crear, text="Guardar", command=guardar_usuario)
+        btn_guardar = tk.Button(ventana_crear, text="Guardar", command=guardar_usuario, bg="#7DA181", fg="black", font=("Arial", 12))
         btn_guardar.pack(pady=20)
 
     def editar_cuentas(self):
-        # Mostrar tabla con cuentas
+        # Mostrar tabla con cuentas con diseño
         cursor = self.conn.cursor()
         cursor.execute("SELECT * FROM usuarios")
         cuentas = cursor.fetchall()
@@ -237,7 +263,7 @@ class BaseburaApp:
                     nuevo_tipo = tipo_cuenta_var.get()
 
                     cursor.execute("UPDATE usuarios SET correo=?, contrasena=?, tipo_cuenta=? WHERE correo=?",
-                                   (nuevo_correo, nueva_contrasena, nuevo_tipo, correo))
+                                (nuevo_correo, nueva_contrasena, nuevo_tipo, correo))
                     self.conn.commit()
                     messagebox.showinfo("Éxito", "Cuenta editada exitosamente")
                     ventana_editar.destroy()
@@ -245,31 +271,33 @@ class BaseburaApp:
                 ventana_editar = tk.Toplevel(self.root)
                 ventana_editar.title("Editar Cuenta")
                 ventana_editar.geometry("400x300")
+                ventana_editar.config(bg="#497D83")
 
-                tk.Label(ventana_editar, text="Nuevo correo:").pack(pady=5)
+                tk.Label(ventana_editar, text="Nuevo correo:", bg="#497D83", font=("Arial", 12)).pack(pady=5)
                 correo_entry = tk.Entry(ventana_editar, width=30)
                 correo_entry.insert(0, correo)
                 correo_entry.pack(pady=5)
 
-                tk.Label(ventana_editar, text="Nueva contraseña:").pack(pady=5)
+                tk.Label(ventana_editar, text="Nueva contraseña:", bg="#497D83", font=("Arial", 12)).pack(pady=5)
                 contrasena_entry = tk.Entry(ventana_editar, show="*", width=30)
                 contrasena_entry.insert(0, contrasena)
                 contrasena_entry.pack(pady=5)
 
-                tk.Label(ventana_editar, text="Nuevo tipo de cuenta:").pack(pady=5)
+                tk.Label(ventana_editar, text="Nuevo tipo de cuenta:", bg="#497D83", font=("Arial", 12)).pack(pady=5)
                 tipo_cuenta_var = tk.StringVar(value=tipo_cuenta)
                 tipo_cuenta_menu = tk.OptionMenu(ventana_editar, tipo_cuenta_var, "admin", "representante", "trabajador")
                 tipo_cuenta_menu.pack(pady=5)
 
-                btn_guardar = tk.Button(ventana_editar, text="Guardar cambios", command=guardar_ediciones)
+                btn_guardar = tk.Button(ventana_editar, text="Guardar cambios", command=guardar_ediciones, bg="#7DA181", fg="black", font=("Arial", 12))
                 btn_guardar.pack(pady=20)
 
-        # Ventana para editar cuentas
+        # Ventana para editar cuentas con diseño
         ventana_editar_cuentas = tk.Toplevel(self.root)
         ventana_editar_cuentas.title("Editar Cuentas")
         ventana_editar_cuentas.geometry("500x400")
+        ventana_editar_cuentas.config(bg="#497D83")
 
-        tk.Label(ventana_editar_cuentas, text="Selecciona la cuenta a editar:").pack(pady=10)
+        tk.Label(ventana_editar_cuentas, text="Selecciona la cuenta a editar:", bg="#497D83", font=("Arial", 12)).pack(pady=10)
 
         # Tabla de cuentas
         tabla = tk.Listbox(ventana_editar_cuentas, height=10, width=50)
@@ -277,11 +305,11 @@ class BaseburaApp:
             tabla.insert(tk.END, f"{cuenta[1]} - {cuenta[3]}")  # Mostrar correo y tipo de cuenta
         tabla.pack(pady=10)
 
-        btn_editar = tk.Button(ventana_editar_cuentas, text="Editar", command=editar_seleccionada)
+        btn_editar = tk.Button(ventana_editar_cuentas, text="Editar", command=editar_seleccionada, bg="#7DA181", fg="black", font=("Arial", 12))
         btn_editar.pack(pady=10)
 
     def eliminar_cuentas(self):
-        # Mostrar tabla con cuentas
+        # Mostrar tabla con cuentas con diseño
         cursor = self.conn.cursor()
         cursor.execute("SELECT * FROM usuarios")
         cuentas = cursor.fetchall()
@@ -299,12 +327,13 @@ class BaseburaApp:
                     messagebox.showinfo("Éxito", "Cuenta eliminada exitosamente")
                     ventana_eliminar.destroy()
 
-        # Ventana para eliminar cuentas
+        # Ventana para eliminar cuentas con diseño
         ventana_eliminar = tk.Toplevel(self.root)
         ventana_eliminar.title("Eliminar Cuenta")
         ventana_eliminar.geometry("500x400")
+        ventana_eliminar.config(bg="#497D83")
 
-        tk.Label(ventana_eliminar, text="Selecciona la cuenta a eliminar:").pack(pady=10)
+        tk.Label(ventana_eliminar, text="Selecciona la cuenta a eliminar:", bg="#497D83", font=("Arial", 12)).pack(pady=10)
 
         # Tabla de cuentas
         tabla = tk.Listbox(ventana_eliminar, height=10, width=50)
@@ -312,14 +341,15 @@ class BaseburaApp:
             tabla.insert(tk.END, f"{cuenta[1]} - {cuenta[3]}")  # Mostrar correo y tipo de cuenta
         tabla.pack(pady=10)
 
-        btn_eliminar = tk.Button(ventana_eliminar, text="Eliminar", command=eliminar_seleccionada)
+        btn_eliminar = tk.Button(ventana_eliminar, text="Eliminar", command=eliminar_seleccionada, bg="#7DA181", fg="black", font=("Arial", 12))
         btn_eliminar.pack(pady=10)
 
     def contactar_administradores(self):
-        # Crear una nueva ventana Toplevel para mostrar la información de contacto
+        # Crear una nueva ventana Toplevel para mostrar la información de contacto con diseño
         ventana_contacto = tk.Toplevel(self.root)
         ventana_contacto.title("Contactar Administradores")
         ventana_contacto.geometry("400x300")
+        ventana_contacto.config(bg="#497D83")
 
         # Información de los administradores
         info_contacto = (
@@ -343,16 +373,16 @@ class BaseburaApp:
         )
 
         # Etiqueta para mostrar la información
-        tk.Label(ventana_contacto, text=info_contacto, font=("Arial", 12), justify="left").pack(pady=10, padx=10)
-
+        tk.Label(ventana_contacto, text=info_contacto, font=("Arial", 12), justify="left", bg="#497D83", fg="white").pack(pady=10, padx=10)
 
 
     def menu_representante(self):
-        # Menú de representante
-        frame_representante = tk.Frame(self.root)
+        # Menú de representante con estilo similar al del administrador
+        frame_representante = tk.Frame(self.root, bg="#497D83")
         frame_representante.pack(expand=True, fill='both')
 
-        tk.Label(frame_representante, text="Menú de Representante", font=("Arial", 18)).pack(pady=20)
+        # Encabezado
+        tk.Label(frame_representante, text="Menú de Representante", font=("Arial", 18), bg="#497D83", fg="white").pack(pady=20)
 
         opciones = [
             ("Solicitar Servicio", self.solicitar_servicio),
@@ -362,7 +392,7 @@ class BaseburaApp:
         ]
 
         for texto, comando in opciones:
-            btn = tk.Button(frame_representante, text=texto, command=comando, width=30)
+            btn = tk.Button(frame_representante, text=texto, command=comando, width=30, bg="#7DA181", fg="black", font=("Arial", 12))
             btn.pack(pady=5)
 
     def solicitar_servicio(self):
@@ -391,34 +421,35 @@ class BaseburaApp:
         ventana_solicitud = tk.Toplevel(self.root)
         ventana_solicitud.title("Solicitar Servicio")
         ventana_solicitud.geometry("400x300")
+        ventana_solicitud.config(bg="#497D83")
 
-        tk.Label(ventana_solicitud, text="Correo electrónico:").pack(pady=5)
+        tk.Label(ventana_solicitud, text="Correo electrónico:", bg="#497D83", font=("Arial", 12)).pack(pady=5)
         correo_entry = tk.Entry(ventana_solicitud, width=30)
         correo_entry.pack(pady=5)
 
-        tk.Label(ventana_solicitud, text="Seleccionar Tianguis:").pack(pady=5)
+        tk.Label(ventana_solicitud, text="Seleccionar Tianguis:", bg="#497D83", font=("Arial", 12)).pack(pady=5)
         tianguis_var = tk.StringVar(value="Tianguis 1 Herreros 64, El Rosario, Azcapotzalco, 02100 Ciudad de México, CDMX")
         tianguis_menu = ttk.Combobox(ventana_solicitud, textvariable=tianguis_var)
         tianguis_menu['values'] = ['Tianguis 1 :"Herreros 64, El Rosario, Azcapotzalco, 02100 Ciudad de México, CDMX"',
-                                'Tianguis 2 "Herreros 142-156, El Rosario, Azcapotzalco, 02100 Ciudad de México, CDMX"',
-                                'Tianguis 3 "BELLE ÂME, Astronomía #1 U.H, El Rosario, 02100 Ciudad de México"',
-                                'Tianguis 4 "El Rosario, Azcapotzalco, 02100 Ciudad de México, CDMX"',
-                                'Tianguis 5 "Calle Helio 37-17, El Rosario, Azcapotzalco, 02100 Ciudad de México, CDMX"',
-                                'Tianguis 6 "Argon 2, El Rosario, Azcapotzalco, 02100 Ciudad de México, CDMX"',
-                                'Tianguis 7 "Del Pescadito 10, El Rosario, Azcapotzalco, 02100 Ciudad de México, CDMX"']
+                                    'Tianguis 2 "Herreros 142-156, El Rosario, Azcapotzalco, 02100 Ciudad de México, CDMX"',
+                                    'Tianguis 3 "BELLE ÂME, Astronomía #1 U.H, El Rosario, 02100 Ciudad de México"',
+                                    'Tianguis 4 "El Rosario, Azcapotzalco, 02100 Ciudad de México, CDMX"',
+                                    'Tianguis 5 "Calle Helio 37-17, El Rosario, Azcapotzalco, 02100 Ciudad de México, CDMX"',
+                                    'Tianguis 6 "Argon 2, El Rosario, Azcapotzalco, 02100 Ciudad de México, CDMX"',
+                                    'Tianguis 7 "Del Pescadito 10, El Rosario, Azcapotzalco, 02100 Ciudad de México, CDMX"']
         tianguis_menu.pack(pady=5)
 
-        btn_enviar = tk.Button(ventana_solicitud, text="Enviar Solicitud", command=enviar_solicitud)
+        btn_enviar = tk.Button(ventana_solicitud, text="Enviar Solicitud", command=enviar_solicitud, bg="#7DA181", fg="black", font=("Arial", 12))
         btn_enviar.pack(pady=20)
 
-
     def consultar_reporte(self):
-        # Ventana para consultar reportes
+        # Ventana para consultar reportes con estilo similar al del administrador
         ventana_consulta = tk.Toplevel(self.root)
         ventana_consulta.title("Consultar Reportes")
         ventana_consulta.geometry("600x400")
+        ventana_consulta.config(bg="#497D83")
 
-        tk.Label(ventana_consulta, text="Reportes de Recolección", font=("Arial", 16)).pack(pady=10)
+        tk.Label(ventana_consulta, text="Reportes de Recolección", font=("Arial", 16), bg="#497D83", fg="white").pack(pady=10)
 
         # Crear tabla para mostrar reportes
         columnas = ("tianguis", "cantidad_basura", "tiempo_recoleccion", "Fecha")
@@ -431,7 +462,6 @@ class BaseburaApp:
         tabla.heading("tiempo_recoleccion", text="Tiempo de Recolección (min)")
         tabla.heading("Fecha", text="Fecha Del Servicio")
 
-
         # Consultar reportes de la base de datos
         cursor = self.conn.cursor()
         cursor.execute("SELECT tianguis, cantidad_basura, tiempo_recoleccion, Fecha FROM recolecciones")
@@ -441,16 +471,16 @@ class BaseburaApp:
         for reporte in reportes:
             tabla.insert("", tk.END, values=reporte)
 
-        btn_cerrar = tk.Button(ventana_consulta, text="Cerrar", command=ventana_consulta.destroy)
+        btn_cerrar = tk.Button(ventana_consulta, text="Cerrar", command=ventana_consulta.destroy, bg="#7DA181", fg="black", font=("Arial", 12))
         btn_cerrar.pack(pady=10)
-
     
     def menu_trabajador(self):
-        # Menú del trabajador
-        frame_trabajador = tk.Frame(self.root)
+        # Menú del trabajador con estilo similar al del representante
+        frame_trabajador = tk.Frame(self.root, bg="#497D83")
         frame_trabajador.pack(expand=True, fill='both')
 
-        tk.Label(frame_trabajador, text="Menú de Trabajador", font=("Arial", 18)).pack(pady=20)
+        # Encabezado
+        tk.Label(frame_trabajador, text="Menú de Trabajador", font=("Arial", 18), bg="#497D83", fg="white").pack(pady=20)
 
         opciones = [
             ("Mapa de los Tianguis", self.mapa_tianguis),
@@ -461,7 +491,7 @@ class BaseburaApp:
         ]
 
         for texto, comando in opciones:
-            btn = tk.Button(frame_trabajador, text=texto, command=comando, width=30)
+            btn = tk.Button(frame_trabajador, text=texto, command=comando, width=30, bg="#7DA181", fg="black", font=("Arial", 12))
             btn.pack(pady=5)
 
     def consultar_solicitudes(self):
@@ -469,8 +499,9 @@ class BaseburaApp:
         ventana_consulta = tk.Toplevel(self.root)
         ventana_consulta.title("Consultar Solicitudes de Servicio")
         ventana_consulta.geometry("600x400")
+        ventana_consulta.config(bg="#497D83")
 
-        tk.Label(ventana_consulta, text="Solicitudes de Servicio", font=("Arial", 16)).pack(pady=10)
+        tk.Label(ventana_consulta, text="Solicitudes de Servicio", font=("Arial", 16), bg="#497D83", fg="white").pack(pady=10)
 
         # Crear tabla para mostrar solicitudes
         columnas = ("correo", "tianguis")
@@ -490,36 +521,35 @@ class BaseburaApp:
         for solicitud in solicitudes:
             tabla.insert("", tk.END, values=solicitud)
 
-        btn_cerrar = tk.Button(ventana_consulta, text="Cerrar", command=ventana_consulta.destroy)
+        btn_cerrar = tk.Button(ventana_consulta, text="Cerrar", command=ventana_consulta.destroy, bg="#7DA181", fg="black", font=("Arial", 12))
         btn_cerrar.pack(pady=10)
-
 
     def mapa_tianguis(self):
         # Función para abrir el mapa de tianguis en el navegador
         file_path = os.path.abspath("mapa_tianguis.html")
         webbrowser.open(f"file:///{file_path}", new=2)
 
-        
     def registrar_recoleccion(self):
         # Ventana para registrar recolección
         ventana_registro = tk.Toplevel(self.root)
         ventana_registro.title("Registrar Datos de Recolección")
         ventana_registro.geometry("400x300")
+        ventana_registro.config(bg="#497D83")
 
         # Campos para ingresar los datos
-        tk.Label(ventana_registro, text="Número de Tianguis:").pack(pady=5)
+        tk.Label(ventana_registro, text="Número de Tianguis:", bg="#497D83", fg="white").pack(pady=5)
         tianguis_entry = tk.Entry(ventana_registro, width=30)
         tianguis_entry.pack(pady=5)
 
-        tk.Label(ventana_registro, text="Cantidad de basura generada (kg):").pack(pady=5)
+        tk.Label(ventana_registro, text="Cantidad de basura generada (kg):", bg="#497D83", fg="white").pack(pady=5)
         basura_entry = tk.Entry(ventana_registro, width=30)
         basura_entry.pack(pady=5)
 
-        tk.Label(ventana_registro, text="Tiempo de recolección (min):").pack(pady=5)
+        tk.Label(ventana_registro, text="Tiempo de recolección (min):", bg="#497D83", fg="white").pack(pady=5)
         tiempo_entry = tk.Entry(ventana_registro, width=30)
         tiempo_entry.pack(pady=5)
 
-        tk.Label(ventana_registro, text="Fecha del Servicio (dd/mm/aaaa):").pack(pady=5)
+        tk.Label(ventana_registro, text="Fecha del Servicio (dd/mm/aaaa):", bg="#497D83", fg="white").pack(pady=5)
         fecha_entry = tk.Entry(ventana_registro, width=30)
         fecha_entry.pack(pady=5)
 
@@ -563,7 +593,7 @@ class BaseburaApp:
                 messagebox.showerror("Error", "Por favor ingresa valores numéricos válidos.")
 
         # Botón para guardar
-        btn_guardar = tk.Button(ventana_registro, text="Guardar", command=guardar_recoleccion)
+        btn_guardar = tk.Button(ventana_registro, text="Guardar", command=guardar_recoleccion, bg="#7DA181", fg="black", font=("Arial", 12))
         btn_guardar.pack(pady=20)
 
     
