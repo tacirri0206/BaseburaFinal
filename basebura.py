@@ -527,7 +527,7 @@ class BaseburaApp:
     def mapa_tianguis(self):
         # Función para abrir el mapa de tianguis en el navegador
         file_path = os.path.abspath("mapa_tianguis.html")
-        webbrowser.open(f"file:///Users/sebastiansb/Desktop/baseburafinal/mapa_tianguis.html", new=2)
+        webbrowser.open(f"file:///{file_path}", new=2)
 
     def registrar_recoleccion(self):
         # Ventana para registrar recolección
